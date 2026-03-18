@@ -1,0 +1,3 @@
+int if;
+if := 10;
+print if;

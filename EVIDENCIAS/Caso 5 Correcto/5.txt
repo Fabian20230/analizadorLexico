@@ -1,0 +1,13 @@
+int a;
+int b;
+int resultado;
+
+a := 10;
+b := 5;
+
+resultado := a + b;
+
+if resultado > 10;
+print resultado;
+else;
+print b;
