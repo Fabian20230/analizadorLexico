@@ -7,13 +7,14 @@ import java.util.regex.*;
 public class AnalizadorLexico {
 
     private TablaSimbolos tabla = new TablaSimbolos();
+    private TablaErrores tablaErrores = new TablaErrores();
 
     private Set<String> palabrasReservadas = new HashSet<>(Arrays.asList(
-            "if", "else", "while", "int", "float", "print"
+            "if", "else", "for", "int", "print"
     ));
 
     private Pattern patron = Pattern.compile(
-            ":=|<=|>=|<>|[+\\-*/<>]|[(){}\\[\\],;]|\\d+|[a-zA-Z][a-zA-Z0-9]*"
+            ":=|<=|>=|<>|[+\\-*/<>=]|[(){}\\[\\],;]|\\d+|[a-zA-Z][a-zA-Z0-9]*"
     );
 
     public void analizarArchivo(String ruta) {
@@ -34,9 +35,11 @@ public class AnalizadorLexico {
 
                 if (!linea.endsWith(";")) {
 
-                    System.out.println(
-                            "Error sintáctico en línea " + numeroLinea +
-                            ": la línea debe terminar con ';'"
+                	tablaErrores.agregar(
+                            linea,
+                            "SINTACTICO",
+                            "La línea debe terminar con ';'",
+                            numeroLinea
                     );
 
                     numeroLinea++;
@@ -68,22 +71,40 @@ public class AnalizadorLexico {
 
                 if (!error.isEmpty()) {
 
-                    System.out.println(
-                            "Error léxico en línea " + numeroLinea +
-                            ": símbolo no reconocido -> " + error
-                    );
+                	tablaErrores.agregar(
+                	        error,
+                	        "LEXICO",
+                	        "Símbolo no reconocido",
+                	        numeroLinea
+                	);
                 }
             }
 
             String lexema = matcher.group();
 
-            procesarToken(lexema);
+            procesarToken(lexema, numeroLinea);
 
             ultimoFin = matcher.end();
         }
+        
+        if (ultimoFin < linea.length()) {
+
+			String error = linea.substring(ultimoFin).trim();
+
+			if (!error.isEmpty()) {
+
+				tablaErrores.agregar(
+				        error,
+				        "LEXICO",
+				        "Símbolo no reconocido",
+				        numeroLinea
+				);
+			}
+		}
+        
     }
 
-    private void procesarToken(String lexema) {
+    private void procesarToken(String lexema, int numeroLinea) {
 
         if (palabrasReservadas.contains(lexema)) {
 
@@ -99,9 +120,13 @@ public class AnalizadorLexico {
 
             if (numero > 100) {
 
-                System.out.println(
-                        "Error léxico: número fuera de rango -> " + lexema
-                );
+            	tablaErrores.agregar(
+            	        lexema,
+            	        "LEXICO",
+            	        "Número fuera de rango",
+            	        numeroLinea
+            	);
+
 
             } else {
 
@@ -116,9 +141,12 @@ public class AnalizadorLexico {
 
             if (lexema.length() > 10) {
 
-                System.out.println(
-                        "Error léxico: identificador demasiado largo -> " + lexema
-                );
+            	tablaErrores.agregar(
+            	        lexema,
+            	        "LEXICO",
+            	        "Identificador demasiado largo",
+            	        numeroLinea
+            	);
 
             } else {
 
@@ -129,7 +157,7 @@ public class AnalizadorLexico {
             }
         }
 
-        else if (lexema.matches(":=|<=|>=|<>|[+\\-*/<>]")) {
+        else if (lexema.matches(":=|<=|>=|<>|[+\\-*/<>=]")) {
 
             Token token = new Token(TipoToken.OPERADOR, lexema);
             System.out.println(token);
@@ -147,7 +175,11 @@ public class AnalizadorLexico {
     }
 
     public void mostrarTablaSimbolos() {
-
         tabla.mostrar();
     }
+    
+    public void mostrarTablaErrores() {
+        tablaErrores.mostrar();
+    }
+
 }
