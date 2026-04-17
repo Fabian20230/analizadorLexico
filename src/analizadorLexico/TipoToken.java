@@ -7,5 +7,7 @@ public enum TipoToken {
     NUMERO,
     OPERADOR,
     DELIMITADOR,
+    EOF,
+    CADENA,
     ERROR
 }

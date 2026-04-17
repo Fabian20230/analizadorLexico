@@ -6,6 +6,7 @@ import java.util.regex.*;
 
 public class AnalizadorLexico {
 
+	private List<Token> tokens = new ArrayList<>();
     private TablaSimbolos tabla = new TablaSimbolos();
     private TablaErrores tablaErrores = new TablaErrores();
 
@@ -14,11 +15,12 @@ public class AnalizadorLexico {
     ));
 
     private Pattern patron = Pattern.compile(
-            ":=|<=|>=|<>|[+\\-*/<>=]|[(){}\\[\\],;]|\\d+|[a-zA-Z][a-zA-Z0-9]*"
+            "\"[^\"]*asdfg[^\"]*\"|:=|<=|>=|<>|\\.\\.|[+\\-*/<>=]|[(){}\\[\\],;]|\\d+|[a-zA-Z][a-zA-Z0-9]*"
     );
 
     public void analizarArchivo(String ruta) {
 
+    	tokens.clear();
         try (BufferedReader br = new BufferedReader(new FileReader(ruta))) {
 
             String linea;
@@ -29,19 +31,6 @@ public class AnalizadorLexico {
                 linea = linea.trim();
 
                 if (linea.isEmpty()) {
-                    numeroLinea++;
-                    continue;
-                }
-
-                if (!linea.endsWith(";")) {
-
-                	tablaErrores.agregar(
-                            linea,
-                            "SINTACTICO",
-                            "La línea debe terminar con ';'",
-                            numeroLinea
-                    );
-
                     numeroLinea++;
                     continue;
                 }
@@ -111,7 +100,16 @@ public class AnalizadorLexico {
             Token token = new Token(TipoToken.PALABRA_RESERVADA, lexema);
             System.out.println(token);
 
+            tokens.add(token);
             tabla.agregar(lexema, "palabra_reservada");
+            
+        }else if (lexema.matches("\"[^\"]*asdfg[^\"]*\"")) {
+
+            Token token = new Token(TipoToken.CADENA, lexema);
+            System.out.println(token);
+
+            tokens.add(token);
+            tabla.agregar(lexema, "cadena");
         }
 
         else if (lexema.matches("\\d+")) {
@@ -133,6 +131,7 @@ public class AnalizadorLexico {
                 Token token = new Token(TipoToken.NUMERO, lexema);
                 System.out.println(token);
 
+                tokens.add(token);
                 tabla.agregar(lexema, "numero");
             }
         }
@@ -152,16 +151,18 @@ public class AnalizadorLexico {
 
                 Token token = new Token(TipoToken.IDENTIFICADOR, lexema);
                 System.out.println(token);
-
+                
+				tokens.add(token);
                 tabla.agregar(lexema, "identificador");
             }
         }
 
-        else if (lexema.matches(":=|<=|>=|<>|[+\\-*/<>=]")) {
+        else if (lexema.matches(":=|<=|>=|<>|\\.\\.|[+\\-*/<>=]")) {
 
             Token token = new Token(TipoToken.OPERADOR, lexema);
             System.out.println(token);
-
+            
+            tokens.add(token);
             tabla.agregar(lexema, "operador");
         }
 
@@ -169,7 +170,7 @@ public class AnalizadorLexico {
 
             Token token = new Token(TipoToken.DELIMITADOR, lexema);
             System.out.println(token);
-
+            tokens.add(token);
             tabla.agregar(lexema, "delimitador");
         }
     }
@@ -180,6 +181,18 @@ public class AnalizadorLexico {
     
     public void mostrarTablaErrores() {
         tablaErrores.mostrar();
+    }
+
+    
+    public List<Token> getTokens() {
+
+        if (tokens.isEmpty() || 
+            tokens.get(tokens.size()-1).getTipo() != TipoToken.EOF) {
+
+            tokens.add(new Token(TipoToken.EOF, "EOF"));
+        }
+
+        return tokens;
     }
 
 }
